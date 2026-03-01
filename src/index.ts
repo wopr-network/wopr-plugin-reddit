@@ -6,7 +6,7 @@
  */
 
 import Snoowrap from "snoowrap";
-import { redditChannelProvider, setBotUsername, setRedditClient } from "./channel-provider.js";
+import { redditChannelProvider, setBotUsername, setDefaultSubject, setRedditClient } from "./channel-provider.js";
 import { logger } from "./logger.js";
 import { handleRedditEvent } from "./message-adapter.js";
 import { RedditPoller } from "./poller.js";
@@ -86,6 +86,13 @@ const configSchema: ConfigSchema = {
       label: "Monitor Inbox",
       default: true,
       description: "Watch for replies, mentions, and DMs",
+    },
+    {
+      name: "defaultSubject",
+      type: "text",
+      label: "Default DM/Post Subject",
+      placeholder: "Leave blank to derive from message content",
+      description: "Subject line for outbound DMs and self-posts (first 50 chars of content used if not set)",
     },
   ],
 };
@@ -174,6 +181,7 @@ const plugin: WOPRPlugin = {
     poster = new RedditPoster(redditClient);
     setRedditClient(redditClient);
     setBotUsername(config.username);
+    setDefaultSubject(config.defaultSubject);
 
     // Register extension so other plugins can use poster
     if (ctx.registerExtension) {

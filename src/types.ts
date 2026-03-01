@@ -36,6 +36,8 @@ export interface RedditPluginConfig {
   pollIntervalSeconds?: number;
   /** Whether to monitor inbox (replies, mentions, DMs) */
   monitorInbox?: boolean;
+  /** Default subject line for DMs and self-posts (derived from content if not set) */
+  defaultSubject?: string;
 }
 
 /** A watched subreddit subscription */

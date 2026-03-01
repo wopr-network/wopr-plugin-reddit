@@ -26,9 +26,8 @@ export class RedditPoster {
       case "t3": // post
         await this.client.replyToPost(id, body);
         break;
-      case "t4": // message — reply via DM (Reddit doesn't support direct message reply threading well)
-        logger.warn({ msg: "Reply to t4 (message) not directly supported, use sendDM instead", thingName });
-        break;
+      case "t4": // message — Reddit does not support reply threading on direct messages
+        throw new Error(`Cannot reply to direct message ${thingName}: use sendDM instead`);
       default:
         logger.error({ msg: "Unknown thing prefix", prefix, thingName });
     }
