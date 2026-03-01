@@ -38,7 +38,7 @@ export class RateLimiter {
     const waitMs = Math.max(0, this.windowMs - elapsed) + 1;
     await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
     this.refill();
-    this.tokens--;
+    this.tokens = Math.max(0, this.tokens - 1);
   }
 
   get remaining(): number {

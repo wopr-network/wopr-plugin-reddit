@@ -4,6 +4,7 @@ import type { ChannelCommand, ChannelMessageParser, ChannelProvider } from "./ty
 
 let client: RedditClient | null = null;
 let botUsername = "unknown";
+let defaultSubject: string | undefined;
 
 export function setRedditClient(c: RedditClient | null): void {
   client = c;
@@ -11,6 +12,16 @@ export function setRedditClient(c: RedditClient | null): void {
 
 export function setBotUsername(username: string): void {
   botUsername = username;
+}
+
+export function setDefaultSubject(subject: string | undefined): void {
+  defaultSubject = subject;
+}
+
+function deriveSubject(content: string): string {
+  if (defaultSubject) return defaultSubject;
+  const trimmed = content.trim();
+  return trimmed.length > 50 ? trimmed.slice(0, 50) : trimmed;
 }
 
 const registeredCommands: Map<string, ChannelCommand> = new Map();
@@ -50,9 +61,9 @@ export const redditChannelProvider: ChannelProvider = {
     // channelId is treated as a Reddit username for DMs, or "subreddit:name" for posts
     if (channelId.startsWith("subreddit:")) {
       const sub = channelId.slice("subreddit:".length);
-      await client.submitSelfPost(sub, "WOPR Message", content);
+      await client.submitSelfPost(sub, deriveSubject(content), content);
     } else {
-      await client.sendDirectMessage(channelId, "WOPR Message", content);
+      await client.sendDirectMessage(channelId, deriveSubject(content), content);
     }
   },
 
