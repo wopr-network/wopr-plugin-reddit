@@ -33,12 +33,11 @@ export class RateLimiter {
   }
 
   async waitForToken(): Promise<void> {
-    if (this.tryAcquire()) return;
-    const elapsed = Date.now() - this.lastRefill;
-    const waitMs = Math.max(0, this.windowMs - elapsed) + 1;
-    await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
-    this.refill();
-    this.tokens = Math.max(0, this.tokens - 1);
+    while (!this.tryAcquire()) {
+      const elapsed = Date.now() - this.lastRefill;
+      const waitMs = Math.max(0, this.windowMs - elapsed) + 1;
+      await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
+    }
   }
 
   get remaining(): number {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { RedditPoster } from "./poster.js";
 import type { RedditClient } from "./reddit-client.js";
 

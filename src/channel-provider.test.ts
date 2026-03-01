@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { redditChannelProvider, setRedditClient, setDefaultSubject } from "./channel-provider.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { redditChannelProvider, setDefaultSubject, setRedditClient } from "./channel-provider.js";
 import type { RedditClient } from "./reddit-client.js";
 
 function makeMockClient(): RedditClient {
