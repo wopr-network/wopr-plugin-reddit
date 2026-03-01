@@ -19,6 +19,7 @@ let ctx: WOPRPluginContext | null = null;
 let redditClient: RedditClient | null = null;
 let poller: RedditPoller | null = null;
 let poster: RedditPoster | null = null;
+let isInitialized = false;
 
 const configSchema: ConfigSchema = {
   title: "Reddit Integration",
@@ -118,6 +119,10 @@ const plugin: WOPRPlugin = {
   },
 
   async init(context: WOPRPluginContext) {
+    if (isInitialized) {
+      logger.warn("Reddit plugin init() called while already initialized — auto-shutting down first");
+      await plugin.shutdown?.();
+    }
     ctx = context;
     ctx.registerConfigSchema("wopr-plugin-reddit", configSchema);
 
@@ -165,6 +170,7 @@ const plugin: WOPRPlugin = {
     const config = ctx.getConfig<RedditPluginConfig>();
     if (!config?.clientId || !config?.clientSecret || !config?.refreshToken || !config?.username) {
       logger.warn("Reddit plugin not fully configured — missing credentials");
+      isInitialized = true;
       return;
     }
 
@@ -237,6 +243,7 @@ const plugin: WOPRPlugin = {
       logger.info({ msg: "Reddit poller started", subreddits, keywords, pollIntervalMs });
     }
 
+    isInitialized = true;
     logger.info({ msg: "Reddit plugin initialized", username: config.username });
   },
 
@@ -262,6 +269,7 @@ const plugin: WOPRPlugin = {
     redditClient = null;
     poster = null;
     ctx = null;
+    isInitialized = false;
     logger.info("Reddit plugin shut down");
   },
 };
