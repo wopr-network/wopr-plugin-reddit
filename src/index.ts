@@ -170,7 +170,6 @@ const plugin: WOPRPlugin = {
     const config = ctx.getConfig<RedditPluginConfig>();
     if (!config?.clientId || !config?.clientSecret || !config?.refreshToken || !config?.username) {
       logger.warn("Reddit plugin not fully configured — missing credentials");
-      isInitialized = true;
       return;
     }
 
