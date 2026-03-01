@@ -6,7 +6,13 @@
  */
 
 import Snoowrap from "snoowrap";
-import { redditChannelProvider, setBotUsername, setDefaultSubject, setRedditClient } from "./channel-provider.js";
+import {
+  clearRegistrations,
+  redditChannelProvider,
+  setBotUsername,
+  setDefaultSubject,
+  setRedditClient,
+} from "./channel-provider.js";
 import { logger } from "./logger.js";
 import { handleRedditEvent } from "./message-adapter.js";
 import { RedditPoller } from "./poller.js";
@@ -259,6 +265,7 @@ const plugin: WOPRPlugin = {
     if (ctx?.unregisterConfigSchema) {
       ctx.unregisterConfigSchema("wopr-plugin-reddit");
     }
+    clearRegistrations();
     setRedditClient(null);
     setBotUsername("unknown");
     redditClient = null;

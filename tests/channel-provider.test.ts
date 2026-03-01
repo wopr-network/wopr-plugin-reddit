@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { redditChannelProvider, setRedditClient } from "../src/channel-provider.js";
+import { clearRegistrations, redditChannelProvider, setRedditClient } from "../src/channel-provider.js";
 import { createMockSnoowrap } from "../src/__test-utils__/mocks.js";
 import { RedditClient } from "../src/reddit-client.js";
 
@@ -13,13 +13,7 @@ describe("redditChannelProvider", () => {
     mockSnoowrap = createMockSnoowrap();
     client = new RedditClient(mockSnoowrap);
     setRedditClient(client);
-    // Clear registered commands/parsers
-    for (const cmd of redditChannelProvider.getCommands()) {
-      redditChannelProvider.unregisterCommand(cmd.name);
-    }
-    for (const parser of redditChannelProvider.getMessageParsers()) {
-      redditChannelProvider.removeMessageParser(parser.id);
-    }
+    clearRegistrations();
   });
 
   it("has id 'reddit'", () => {
@@ -51,5 +45,46 @@ describe("redditChannelProvider", () => {
 
   it("returns bot username", () => {
     expect(redditChannelProvider.getBotUsername()).toBeDefined();
+  });
+
+  it("clearRegistrations empties both maps", () => {
+    const cmd = { name: "c1", description: "cmd", handler: vi.fn() };
+    const parser = { id: "p1", pattern: /x/, handler: vi.fn() };
+    redditChannelProvider.registerCommand(cmd);
+    redditChannelProvider.addMessageParser(parser);
+    expect(redditChannelProvider.getCommands()).toHaveLength(1);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(1);
+
+    clearRegistrations();
+
+    expect(redditChannelProvider.getCommands()).toHaveLength(0);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(0);
+  });
+
+  it("no duplicate registrations after shutdown-init-shutdown-init reload cycle", () => {
+    const cmd = { name: "reload-cmd", description: "test", handler: vi.fn() };
+    const parser = { id: "reload-parser", pattern: /reload/, handler: vi.fn() };
+    redditChannelProvider.registerCommand(cmd);
+    redditChannelProvider.addMessageParser(parser);
+    expect(redditChannelProvider.getCommands()).toHaveLength(1);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(1);
+
+    clearRegistrations();
+    expect(redditChannelProvider.getCommands()).toHaveLength(0);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(0);
+
+    redditChannelProvider.registerCommand(cmd);
+    redditChannelProvider.addMessageParser(parser);
+    expect(redditChannelProvider.getCommands()).toHaveLength(1);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(1);
+
+    clearRegistrations();
+    expect(redditChannelProvider.getCommands()).toHaveLength(0);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(0);
+
+    redditChannelProvider.registerCommand(cmd);
+    redditChannelProvider.addMessageParser(parser);
+    expect(redditChannelProvider.getCommands()).toHaveLength(1);
+    expect(redditChannelProvider.getMessageParsers()).toHaveLength(1);
   });
 });

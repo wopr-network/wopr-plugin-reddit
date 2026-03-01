@@ -71,3 +71,8 @@ export const redditChannelProvider: ChannelProvider = {
     return botUsername;
   },
 };
+
+export function clearRegistrations(): void {
+  registeredCommands.clear();
+  registeredParsers.clear();
+}
