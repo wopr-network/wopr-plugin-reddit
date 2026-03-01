@@ -1,0 +1,44 @@
+{
+  "name": "@wopr-network/wopr-plugin-reddit",
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.4",
+  "description": "Reddit channel plugin for WOPR - Enables AI conversations on Reddit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "lint": "biome check --config-path=. src/",
+    "lint:fix": "biome check --config-path=. --fix src/",
+    "format": "biome format --config-path=. --write src/",
+    "check": "biome check --config-path=. src/ && tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": ["wopr", "plugin", "reddit", "bot", "ai"],
+  "author": "WOPR",
+  "license": "MIT",
+  "dependencies": {
+    "@wopr-network/plugin-types": "^0.7.1",
+    "snoowrap": "^1.23.0",
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.4",
+    "@types/node": "^25.3.2",
+    "@vitest/coverage-istanbul": "^4.0.18",
+    "@wopr-network/semantic-release-config": "^1.0.0",
+    "semantic-release": "^24.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": ["dist"],
+  "release": {
+    "extends": "@wopr-network/semantic-release-config"
+  }
+}
