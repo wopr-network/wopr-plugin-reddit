@@ -227,10 +227,12 @@ const plugin: WOPRPlugin = {
         onEvent: (event) => {
           if (!ctx) return;
           const sessions = ctx.getSessions() ?? [];
-          const session = sessions[0] ?? "default";
-          handleRedditEvent(event, ctx, session, config.username).catch((err) =>
-            logger.error({ msg: "Event handling failed", error: String(err) }),
-          );
+          const targets = sessions.length > 0 ? sessions : ["default"];
+          for (const session of targets) {
+            handleRedditEvent(event, ctx, session, config.username).catch((err) =>
+              logger.error({ msg: "Event handling failed", error: String(err), session }),
+            );
+          }
         },
       });
       poller.start();
