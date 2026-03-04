@@ -235,14 +235,17 @@ const plugin: WOPRPlugin = {
         keywords,
         pollIntervalMs,
         monitorInbox: config.monitorInbox ?? true,
-        onEvent: (event) => {
+        onEvent: async (event) => {
           if (!ctx) return;
           const sessions = ctx.getSessions() ?? [];
           const targets = sessions.length > 0 ? sessions : ["default"];
           for (const session of targets) {
-            handleRedditEvent(event, ctx, session, config.username).catch((err) =>
-              logger.error({ msg: "Event handling failed", error: String(err), session }),
-            );
+            try {
+              const consumed = await handleRedditEvent(event, ctx, session, config.username);
+              if (consumed) break;
+            } catch (err) {
+              logger.error({ msg: "Event handling failed", error: String(err), session });
+            }
           }
         },
       });
