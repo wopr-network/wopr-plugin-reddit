@@ -7,10 +7,10 @@ export async function handleRedditEvent(
   ctx: WOPRPluginContext,
   session: string,
   botUsername?: string,
-): Promise<void> {
+): Promise<boolean> {
   // Skip own messages
   if (botUsername && event.author.toLowerCase() === botUsername.toLowerCase()) {
-    return;
+    return false;
   }
 
   // For DM events, check one-shot parsers first
@@ -33,7 +33,7 @@ export async function handleRedditEvent(
           };
           // biome-ignore lint/suspicious/noExplicitAny: handler may signal consumption via return value
           const consumed = (await parser.handler(msgCtx)) as unknown as boolean | undefined;
-          if (consumed) return;
+          if (consumed) return true;
         } catch (err) {
           logger.error({ msg: "Parser handler failed", error: String(err), parserId: parser.id });
         }
@@ -59,4 +59,6 @@ export async function handleRedditEvent(
   } catch (err) {
     logger.error({ msg: "Failed to inject Reddit event", error: String(err), eventId: event.id });
   }
+
+  return false;
 }
