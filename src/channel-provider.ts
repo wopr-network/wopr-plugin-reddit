@@ -117,7 +117,7 @@ export const redditChannelProvider: ChannelProvider = {
         const trimmed = msg.trim().toUpperCase();
         return trimmed === `ACCEPT ${notifId}` || trimmed === `DENY ${notifId}`;
       },
-      handler: async (ctx: ChannelMessageContext) => {
+      handler: async (ctx: ChannelMessageContext): Promise<void> => {
         if (ctx.sender.toLowerCase() !== username.toLowerCase()) return;
 
         const response = ctx.content.trim().toUpperCase();
@@ -138,6 +138,8 @@ export const redditChannelProvider: ChannelProvider = {
         } catch (err) {
           logger.error({ msg: "Notification callback failed", error: String(err), parserId });
         }
+        // Signal to caller that this handler consumed the message
+        return true as any; // biome-ignore lint/suspicious/noExplicitAny: signals consumption to adapter
       },
     };
 
@@ -153,9 +155,7 @@ export function getPendingNotification(parserId: string): ChannelNotificationCal
 }
 
 export function removePendingNotification(parserId: string): void {
-  if (pendingNotifications.has(parserId)) {
-    redditChannelProvider.removeMessageParser(parserId);
-  }
+  redditChannelProvider.removeMessageParser(parserId);
   pendingNotifications.delete(parserId);
 }
 

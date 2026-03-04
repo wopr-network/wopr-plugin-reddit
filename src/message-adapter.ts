@@ -31,8 +31,9 @@ export async function handleRedditEvent(
             },
             getBotUsername: () => redditChannelProvider.getBotUsername(),
           };
-          await parser.handler(msgCtx);
-          return;
+          // biome-ignore lint/suspicious/noExplicitAny: handler may signal consumption via return value
+          const consumed = (await parser.handler(msgCtx)) as unknown as boolean | undefined;
+          if (consumed) return;
         } catch (err) {
           logger.error({ msg: "Parser handler failed", error: String(err), parserId: parser.id });
         }
