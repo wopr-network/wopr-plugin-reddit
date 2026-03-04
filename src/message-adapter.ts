@@ -27,15 +27,15 @@ export async function handleRedditEvent(
             sender: event.author,
             content: event.body,
             reply: async (msg: string) => {
-              await redditChannelProvider.send(event.author, msg);
+              await redditChannelProvider.send(`reddit:dm:${event.author}`, msg);
             },
-            getBotUsername: () => botUsername ?? "unknown",
+            getBotUsername: () => redditChannelProvider.getBotUsername(),
           };
           await parser.handler(msgCtx);
+          return;
         } catch (err) {
           logger.error({ msg: "Parser handler failed", error: String(err), parserId: parser.id });
         }
-        return;
       }
     }
   }
