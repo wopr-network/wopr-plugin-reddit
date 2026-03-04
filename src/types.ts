@@ -2,6 +2,8 @@ export type {
   ChannelCommand,
   ChannelMessageContext,
   ChannelMessageParser,
+  ChannelNotificationCallbacks,
+  ChannelNotificationPayload,
   ChannelProvider,
   ChannelRef,
   ConfigField,

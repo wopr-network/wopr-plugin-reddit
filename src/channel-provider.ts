@@ -1,6 +1,13 @@
 import { logger } from "./logger.js";
 import type { RedditClient } from "./reddit-client.js";
-import type { ChannelCommand, ChannelMessageParser, ChannelProvider } from "./types.js";
+import type {
+  ChannelCommand,
+  ChannelMessageContext,
+  ChannelMessageParser,
+  ChannelNotificationCallbacks,
+  ChannelNotificationPayload,
+  ChannelProvider,
+} from "./types.js";
 
 let client: RedditClient | null = null;
 let botUsername = "unknown";
@@ -70,9 +77,77 @@ export const redditChannelProvider: ChannelProvider = {
   getBotUsername(): string {
     return botUsername;
   },
+
+  async sendNotification(
+    channelId: string,
+    payload: ChannelNotificationPayload,
+    callbacks: ChannelNotificationCallbacks = {},
+  ): Promise<void> {
+    if (payload.type !== "friend-request") {
+      logger.warn({ msg: "Unsupported notification type", type: payload.type });
+      return;
+    }
+
+    if (!client) throw new Error("Reddit client not initialized");
+
+    const username = channelId.replace(/^reddit:dm:/, "");
+    const fromName = payload.from || "Someone";
+
+    const subject = "WOPR Friend Request";
+    const body = `Friend request from u/${fromName}.\n\nReply ACCEPT to approve or DENY to reject.`;
+
+    await client.sendDirectMessage(username, subject, body);
+
+    const parserId = `notif:${username}:${Date.now()}`;
+    pendingNotifications.set(parserId, callbacks);
+
+    const parser: ChannelMessageParser = {
+      id: parserId,
+      pattern: (msg: string) => {
+        const trimmed = msg.trim().toUpperCase();
+        return trimmed === "ACCEPT" || trimmed === "DENY";
+      },
+      handler: async (ctx: ChannelMessageContext) => {
+        if (ctx.sender.toLowerCase() !== username.toLowerCase()) return;
+
+        const response = ctx.content.trim().toUpperCase();
+        const cbs = pendingNotifications.get(parserId);
+        if (!cbs) return;
+
+        redditChannelProvider.removeMessageParser(parserId);
+        pendingNotifications.delete(parserId);
+
+        try {
+          if (response === "ACCEPT" && cbs.onAccept) {
+            await cbs.onAccept();
+            await ctx.reply("Friend request accepted.");
+          } else if (response === "DENY" && cbs.onDeny) {
+            await cbs.onDeny();
+            await ctx.reply("Friend request denied.");
+          }
+        } catch (err) {
+          logger.error({ msg: "Notification callback failed", error: String(err), parserId });
+        }
+      },
+    };
+
+    redditChannelProvider.addMessageParser(parser);
+    logger.info({ msg: "Notification sent", type: payload.type, from: fromName, to: username, parserId });
+  },
 };
+
+const pendingNotifications: Map<string, ChannelNotificationCallbacks> = new Map();
+
+export function getPendingNotification(parserId: string): ChannelNotificationCallbacks | undefined {
+  return pendingNotifications.get(parserId);
+}
+
+export function removePendingNotification(parserId: string): void {
+  pendingNotifications.delete(parserId);
+}
 
 export function clearRegistrations(): void {
   registeredCommands.clear();
   registeredParsers.clear();
+  pendingNotifications.clear();
 }

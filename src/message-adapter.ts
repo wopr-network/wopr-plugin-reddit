@@ -1,5 +1,6 @@
+import { redditChannelProvider } from "./channel-provider.js";
 import { logger } from "./logger.js";
-import type { ChannelRef, RedditInboundEvent, WOPRPluginContext } from "./types.js";
+import type { ChannelMessageContext, ChannelRef, RedditInboundEvent, WOPRPluginContext } from "./types.js";
 
 export async function handleRedditEvent(
   event: RedditInboundEvent,
@@ -10,6 +11,33 @@ export async function handleRedditEvent(
   // Skip own messages
   if (botUsername && event.author.toLowerCase() === botUsername.toLowerCase()) {
     return;
+  }
+
+  // For DM events, check one-shot parsers first
+  if (event.type === "dm") {
+    const parsers = redditChannelProvider.getMessageParsers();
+    for (const parser of parsers) {
+      const matches =
+        typeof parser.pattern === "function" ? parser.pattern(event.body) : (parser.pattern as RegExp).test(event.body);
+      if (matches) {
+        try {
+          const msgCtx: ChannelMessageContext = {
+            channel: `reddit:dm:${event.author}`,
+            channelType: "reddit",
+            sender: event.author,
+            content: event.body,
+            reply: async (msg: string) => {
+              await redditChannelProvider.send(event.author, msg);
+            },
+            getBotUsername: () => botUsername ?? "unknown",
+          };
+          await parser.handler(msgCtx);
+        } catch (err) {
+          logger.error({ msg: "Parser handler failed", error: String(err), parserId: parser.id });
+        }
+        return;
+      }
+    }
   }
 
   let channel: ChannelRef;
